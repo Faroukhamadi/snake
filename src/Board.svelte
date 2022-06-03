@@ -14,24 +14,7 @@
     } while (index === n);
     return index;
   };
-  const restart = () => {
-    highScore = parseInt(localStorage.getItem('highScore')) ?? 0;
-    board = [...Array(20)].map(() => [...Array(20)].map(() => 0));
-    direction = [0, 1] as [number, number];
-    score = 0;
 
-    snakeCoordinates = [[3, 2]];
-    board[3][2] = 1;
-    lost = false;
-
-    speed = Math.floor(Math.max(100, speedHelper));
-    foodI = generateFoodIndex(3);
-    foodJ = generateFoodIndex(2);
-
-    board[foodI][foodJ] = 2;
-    speed = Math.floor(Math.max(100, speedHelper));
-    setTimeout(wrapper, speed);
-  };
   const setHighScore = (): number => {
     const highScore = localStorage.getItem('highScore');
     if (highScore === null) {
@@ -88,9 +71,6 @@
         }
         direction = [0, 1];
         break;
-      case 'Enter':
-        restart();
-        break;
       default:
         break;
     }
@@ -120,7 +100,8 @@
   board[foodI][foodJ] = 2;
 
   const wrapper = (ms: number) => {
-    setTimeout(() => {
+    console.log('wrapper');
+    let id = setTimeout(() => {
       // 0 is always the head's coordinate
       const [x, y] = snakeCoordinates[0];
       const [xStep, yStep] = direction;
@@ -169,6 +150,7 @@
       return;
     } else {
       setTimeout(wrapper, speed);
+      return;
     }
   };
 
@@ -182,6 +164,7 @@
         }
       }
     }
+    console.log('hello');
     snakeCoordinates.forEach(([x, y]) => {
       board[x][y] = 1;
     });

@@ -1,12 +1,26 @@
 <script lang="ts">
   import Board from './Board.svelte';
-  // export let name: string;
-  let name = 'Local State';
+
+  let unique = [{}];
+
+  const restart = () => {
+    unique = [{}];
+  };
 </script>
 
 <main>
-  <Board />
+  {#each unique as key (key)}
+    <Board />
+  {/each}
 </main>
+
+<svelte:window
+  on:keydown={(e) => {
+    if (e.code === 'Enter') {
+      restart();
+    }
+  }}
+/>
 
 <style>
   main {
