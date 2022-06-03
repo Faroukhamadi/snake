@@ -1,11 +1,13 @@
 <script lang="ts">
-  enum Step {
-    NONE = 'none',
-    INCREMENT = 'increment',
-    DECREMENT = 'decrement',
-  }
-
-  const generateIndex = () => Math.floor(Math.random() * 10);
+  const generateIndex = (): number => Math.floor(Math.random() * 10);
+  const isOutOfBounds = (n: number): boolean => n < 0 || n > 9;
+  const generateFoodIndex = (n: number): number => {
+    let index: number;
+    do {
+      index = generateIndex();
+    } while (index === n);
+    return index;
+  };
 
   const handleKeydown = (
     e: KeyboardEvent & {
@@ -14,313 +16,99 @@
   ) => {
     switch (e.code) {
       case 'ArrowUp':
-        iState = Step.DECREMENT;
-        jState = Step.NONE;
+        direction = [-1, 0];
         break;
       case 'ArrowDown':
-        iState = Step.INCREMENT;
-        jState = Step.NONE;
+        direction = [1, 0];
         break;
       case 'ArrowLeft':
-        iState = Step.NONE;
-        jState = Step.DECREMENT;
+        direction = [0, -1];
         break;
       case 'ArrowRight':
-        iState = Step.NONE;
-        jState = Step.INCREMENT;
+        direction = [0, 1];
         break;
       default:
         break;
     }
   };
+  const different = (
+    arr: [number, number],
+    foodI: number,
+    foodJ: number
+  ): boolean => {
+    return arr[0] !== foodI && arr[1] !== foodJ;
+  };
 
-  let board: number[][] = [];
+  type Cell = 0 | 1 | 2;
+  let board: Cell[][] = [...Array(10)].map(() => [...Array(10)].map(() => 0));
+  let direction = [0, 1];
   let score = 0;
-  for (let i = 0; i < 10; i++) {
-    let temp: number[] = [];
-    for (let j = 0; j < 10; j++) {
-      temp.push(0);
-    }
-    board.push(temp);
-  }
-  let i = 3;
-  let j = 2;
-  let snakeCoordinates: number[][] = [[3, 2]];
-  let snakeLength = 1;
-  board[i][j] = 1;
+
+  let snakeCoordinates: Array<[number, number]> = [[3, 2]];
+  board[3][2] = 1;
   let lost = false;
 
-  let jState = Step.INCREMENT;
-  let iState: Step;
-  let foodI: number = 5;
-  let foodJ: number = 5;
+  let speed = Math.floor(Math.max(400, snakeCoordinates.length * 100));
+  let foodI: number = generateFoodIndex(3);
+  let foodJ: number = generateFoodIndex(2);
   board[foodI][foodJ] = 2;
-
-  let clear: NodeJS.Timeout = setInterval(() => {
-    switch (jState) {
-      // Right
-
-      case 'increment':
-        j++;
-        if (!(i > 9 || i < 0 || j > 9 || j < 0)) {
-          let changed = false;
-          if (board[i][j] === 2) {
-            score += snakeLength;
-            snakeLength++;
-            changed = true;
-            do {
-              foodI = generateIndex();
-              foodJ = generateIndex();
-            } while (foodI === i || foodJ === j || foodI === j || foodJ === i);
-            board[foodI][foodJ] = 2;
-          }
-          if (changed) {
-            let lastIndex = snakeCoordinates.length - 1;
-            if (snakeLength <= 2) {
-              snakeCoordinates = [
-                ...snakeCoordinates,
-                [
-                  snakeCoordinates[lastIndex][0],
-                  snakeCoordinates[lastIndex][1],
-                ],
-              ];
-            } else {
-              snakeCoordinates = [
-                ...snakeCoordinates,
-                [
-                  snakeCoordinates[lastIndex][0],
-                  snakeCoordinates[lastIndex][1] + 1,
-                ],
-              ];
-            }
-          } else {
-            if (snakeLength <= 2) {
-              for (let row = 1; row < snakeLength; row++) {
-                snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
-                snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
-              }
-            } else {
-              for (let row = 1; row < snakeLength; row++) {
-                if (row === 1) {
-                  snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
-                  snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
-                } else {
-                  snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
-                  snakeCoordinates[row][1] = snakeCoordinates[row - 1][1] - 1;
-                }
-              }
+  const wrapper = (ms: number) => {
+    let clear: NodeJS.Timer = setInterval(() => {
+      // 0 is always the head's coordinate
+      const [x, y] = snakeCoordinates[0];
+      const [xStep, yStep] = direction;
+      const newHead = [x + xStep, y + yStep] as [number, number];
+      if (isOutOfBounds(newHead[0]) || isOutOfBounds(newHead[1])) {
+        lost = true;
+        return;
+      }
+      if (board[newHead[0]][newHead[1]] === 2) {
+        snakeCoordinates = [newHead, ...snakeCoordinates];
+        let repeat = false;
+        do {
+          repeat = false;
+          foodI = generateIndex();
+          foodJ = generateIndex();
+          for (let i = 0; i < snakeCoordinates.length; i++) {
+            if (!different(snakeCoordinates[i], foodI, foodJ)) {
+              repeat = true;
             }
           }
+        } while (repeat);
+        board[foodI][foodJ] = 2;
+      } else {
+        for (let i = snakeCoordinates.length - 1; i >= 1; i--) {
+          snakeCoordinates[i] = snakeCoordinates[i - 1];
         }
-        break;
-
-      // Left
-
-      case 'decrement':
-        j--;
-        if (!(i > 9 || i < 0 || j > 9 || j < 0)) {
-          let changed = false;
-          if (board[i][j] === 2) {
-            score += snakeLength;
-            snakeLength++;
-            changed = true;
-            do {
-              foodI = generateIndex();
-              foodJ = generateIndex();
-            } while (foodI === i || foodJ === j || foodI === j || foodJ === i);
-            board[foodI][foodJ] = 2;
-          }
-          if (changed) {
-            let lastIndex = snakeCoordinates.length - 1;
-            if (snakeLength <= 2) {
-              snakeCoordinates = [
-                ...snakeCoordinates,
-                [
-                  // the row should remain the same because we're staying at the same line
-                  snakeCoordinates[lastIndex][0],
-                  snakeCoordinates[lastIndex][1],
-                ],
-              ];
-            } else {
-              snakeCoordinates = [
-                ...snakeCoordinates,
-                [
-                  snakeCoordinates[lastIndex][0],
-                  snakeCoordinates[lastIndex][1] - 1,
-                ],
-              ];
-            }
-          } else {
-            if (snakeLength <= 2) {
-              for (let row = 1; row < snakeLength; row++) {
-                snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
-                snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
-              }
-            } else {
-              for (let row = 1; row < snakeLength; row++) {
-                if (row === 1) {
-                  snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
-                  snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
-                } else {
-                  snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
-                  snakeCoordinates[row][1] = snakeCoordinates[row - 1][1] + 1;
-                }
-              }
-            }
-          }
-        }
-        break;
-      default:
-        break;
+        snakeCoordinates[0] = newHead;
+      }
+    }, ms);
+    if (lost) {
+      console.log('user lost, clearing interval...');
+      clearInterval(clear);
     }
+  };
 
-    switch (iState) {
-      case 'increment':
-        // Down
-        i++;
-        if (!(i > 9 || i < 0 || j > 9 || j < 0)) {
-          let changed = false;
-          if (board[i][j] === 2) {
-            score += snakeLength;
-            snakeLength++;
-            changed = true;
-            do {
-              foodI = generateIndex();
-              foodJ = generateIndex();
-            } while (foodI === i || foodJ === j || foodI === j || foodJ === i);
-            board[foodI][foodJ] = 2;
-          }
-          if (changed) {
-            let lastIndex = snakeCoordinates.length - 1;
-            if (snakeLength <= 2) {
-              snakeCoordinates = [
-                ...snakeCoordinates,
-                [
-                  // the row should remain the same because we're staying at the same line
-                  snakeCoordinates[lastIndex][0],
-                  snakeCoordinates[lastIndex][1],
-                ],
-              ];
-            } else {
-              snakeCoordinates = [
-                ...snakeCoordinates,
-                [
-                  snakeCoordinates[lastIndex][0] + 1,
-                  snakeCoordinates[lastIndex][1],
-                ],
-              ];
-            }
-          } else {
-            if (snakeLength <= 2) {
-              for (let row = 1; row < snakeLength; row++) {
-                snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
-                snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
-              }
-            } else {
-              for (let row = 1; row < snakeLength; row++) {
-                if (row === 1) {
-                  snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
-                  snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
-                } else {
-                  snakeCoordinates[row][0] = snakeCoordinates[row - 1][0] - 1;
-                  snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
-                }
-              }
-            }
-          }
-        }
-        break;
-
-      case 'decrement':
-        // Up
-        i--;
-        if (!(i > 9 || i < 0 || j > 9 || j < 0)) {
-          let changed = false;
-          if (board[i][j] === 2) {
-            score += snakeLength;
-            snakeLength++;
-            changed = true;
-            do {
-              foodI = generateIndex();
-              foodJ = generateIndex();
-            } while (foodI === i || foodJ === j || foodI === j || foodJ === i);
-            board[foodI][foodJ] = 2;
-          }
-          if (changed) {
-            let lastIndex = snakeCoordinates.length - 1;
-            if (snakeLength <= 2) {
-              snakeCoordinates = [
-                ...snakeCoordinates,
-                [
-                  // the row should remain the same because we're staying at the same line
-                  snakeCoordinates[lastIndex][0],
-                  snakeCoordinates[lastIndex][1],
-                ],
-              ];
-            } else {
-              snakeCoordinates = [
-                ...snakeCoordinates,
-                [
-                  snakeCoordinates[lastIndex][0] - 1,
-                  snakeCoordinates[lastIndex][1],
-                ],
-              ];
-            }
-          } else {
-            if (snakeLength <= 2) {
-              for (let row = 1; row < snakeLength; row++) {
-                snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
-                // Go back here
-                snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
-              }
-            } else {
-              for (let row = 1; row < snakeLength; row++) {
-                if (row === 1) {
-                  snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
-                  snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
-                } else {
-                  snakeCoordinates[row][0] = snakeCoordinates[row - 1][0] + 1;
-                  snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
-                }
-              }
-            }
-          }
-        }
-        break;
-      default:
-        break;
-    }
-  }, 100);
+  wrapper(speed);
 
   $: {
-    if (i > 9 || i < 0 || j > 9 || j < 0) {
-      clearInterval(clear);
-      lost = true;
-    } else {
-      snakeCoordinates[0][0] = i;
-      snakeCoordinates[0][1] = j;
-      snakeCoordinates = snakeCoordinates;
-      // reinitialize matrix to zero
-      for (let i = 0; i < 10; i++) {
-        for (let j = 0; j < 10; j++) {
-          if (board[i][j] !== 2) {
-            board[i][j] = 0;
-          }
+    for (let i = 0; i < 10; i++) {
+      for (let j = 0; j < 10; j++) {
+        if (board[i][j] === 1) {
+          board[i][j] = 0;
         }
       }
-      console.log('clean up');
-      board = board;
-      snakeCoordinates.forEach((coordinate) => {
-        console.log(coordinate);
-        board[coordinate[0]][coordinate[1]] = 1;
-      });
     }
+    snakeCoordinates.forEach(([x, y]) => {
+      board[x][y] = 1;
+    });
+    speed = Math.floor(Math.max(400, snakeCoordinates.length * 100));
+    console.log('speed is: ', speed);
   }
 </script>
 
 <svelte:window on:keydown={(e) => handleKeydown(e)} />
 
-<h2>Score: {score}</h2>
 <div class="wrapper">
   <div class="board">
     {#each board as row, i}
@@ -337,22 +125,19 @@
   </div>
   {#if lost}
     <h1>You lost! Better luck next time</h1>
+  {:else}
+    <h1>Score: {score}</h1>
   {/if}
 </div>
 
 <style>
-  h2 {
-    text-align: center;
-    text-decoration-line: underline;
-    margin-bottom: 0;
-    padding-bottom: 0;
-  }
   h1 {
     position: absolute;
     bottom: 50px;
+    text-decoration-line: underline;
   }
   .wrapper {
-    height: 100%;
+    height: 80%;
     display: flex;
     justify-content: center;
     align-items: center;
