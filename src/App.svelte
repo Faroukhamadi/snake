@@ -8,6 +8,12 @@
   };
 </script>
 
+<svelte:head>
+  <title>Snake</title>
+  <meta name="robots" content="noindex nofollow" />
+  <html lang="en" />
+</svelte:head>
+
 <main>
   {#each unique as key (key)}
     <Board />
