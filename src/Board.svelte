@@ -35,6 +35,7 @@
   };
 
   let board: number[][] = [];
+  let score = 0;
   for (let i = 0; i < 10; i++) {
     let temp: number[] = [];
     for (let j = 0; j < 10; j++) {
@@ -58,77 +59,115 @@
   let clear: NodeJS.Timeout = setInterval(() => {
     switch (jState) {
       // Right
+
       case 'increment':
         j++;
         if (!(i > 9 || i < 0 || j > 9 || j < 0)) {
           let changed = false;
           if (board[i][j] === 2) {
-            console.log('eat');
+            score += snakeLength;
+            snakeLength++;
+            changed = true;
             do {
               foodI = generateIndex();
               foodJ = generateIndex();
             } while (foodI === i || foodJ === j || foodI === j || foodJ === i);
             board[foodI][foodJ] = 2;
-            snakeLength++;
-            console.log('snake length increasing 1');
-            changed = true;
           }
           if (changed) {
-            for (let row = 1; row < snakeLength; row++) {
+            let lastIndex = snakeCoordinates.length - 1;
+            if (snakeLength <= 2) {
               snakeCoordinates = [
                 ...snakeCoordinates,
-                [snakeCoordinates[row - 1][0], snakeCoordinates[row - 1][1]],
+                [
+                  snakeCoordinates[lastIndex][0],
+                  snakeCoordinates[lastIndex][1],
+                ],
+              ];
+            } else {
+              snakeCoordinates = [
+                ...snakeCoordinates,
+                [
+                  snakeCoordinates[lastIndex][0],
+                  snakeCoordinates[lastIndex][1] + 1,
+                ],
               ];
             }
           } else {
-            for (let row = 1; row < snakeLength; row++) {
-              snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
-              snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
+            if (snakeLength <= 2) {
+              for (let row = 1; row < snakeLength; row++) {
+                snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
+                snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
+              }
+            } else {
+              for (let row = 1; row < snakeLength; row++) {
+                if (row === 1) {
+                  snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
+                  snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
+                } else {
+                  snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
+                  snakeCoordinates[row][1] = snakeCoordinates[row - 1][1] - 1;
+                }
+              }
             }
           }
         }
         break;
+
       // Left
+
       case 'decrement':
         j--;
         if (!(i > 9 || i < 0 || j > 9 || j < 0)) {
           let changed = false;
           if (board[i][j] === 2) {
+            score += snakeLength;
+            snakeLength++;
+            changed = true;
             do {
               foodI = generateIndex();
               foodJ = generateIndex();
             } while (foodI === i || foodJ === j || foodI === j || foodJ === i);
             board[foodI][foodJ] = 2;
-            snakeLength++;
-            changed = true;
-            console.log('changed is: ', changed);
           }
           if (changed) {
-            for (let index = 1; index < snakeCoordinates.length; index++) {
-              snakeCoordinates[index][0] = snakeCoordinates[index - 1][0];
-              snakeCoordinates[index][1] = snakeCoordinates[index - 1][1];
-              console.log('executing the loop');
+            let lastIndex = snakeCoordinates.length - 1;
+            if (snakeLength <= 2) {
+              snakeCoordinates = [
+                ...snakeCoordinates,
+                [
+                  // the row should remain the same because we're staying at the same line
+                  snakeCoordinates[lastIndex][0],
+                  snakeCoordinates[lastIndex][1],
+                ],
+              ];
+            } else {
+              snakeCoordinates = [
+                ...snakeCoordinates,
+                [
+                  snakeCoordinates[lastIndex][0],
+                  snakeCoordinates[lastIndex][1] - 1,
+                ],
+              ];
             }
-            snakeCoordinates = [
-              ...snakeCoordinates,
-              [
-                // TODO: work here
-                snakeCoordinates[snakeCoordinates.length - 1][0] + 1,
-                snakeCoordinates[snakeCoordinates.length - 1][1] + 1,
-              ],
-            ];
-            // snakeCoordinates = [...snakeCoordinates, [i, snakeLength + 1]];
           } else {
-            for (let row = 1; row < snakeLength; row++) {
-              snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
-              snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
-              snakeCoordinates = snakeCoordinates;
+            if (snakeLength <= 2) {
+              for (let row = 1; row < snakeLength; row++) {
+                snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
+                snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
+              }
+            } else {
+              for (let row = 1; row < snakeLength; row++) {
+                if (row === 1) {
+                  snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
+                  snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
+                } else {
+                  snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
+                  snakeCoordinates[row][1] = snakeCoordinates[row - 1][1] + 1;
+                }
+              }
             }
           }
-          console.log('snake coordinates');
-          snakeCoordinates.forEach((element, i) => {
-            console.log(i, element);
-          });
         }
         break;
       default:
@@ -142,58 +181,108 @@
         if (!(i > 9 || i < 0 || j > 9 || j < 0)) {
           let changed = false;
           if (board[i][j] === 2) {
-            console.log('eat');
+            score += snakeLength;
+            snakeLength++;
+            changed = true;
             do {
               foodI = generateIndex();
               foodJ = generateIndex();
             } while (foodI === i || foodJ === j || foodI === j || foodJ === i);
             board[foodI][foodJ] = 2;
-            snakeLength++;
-            console.log('snake length increasing 3');
-            changed = true;
           }
           if (changed) {
-            for (let row = 1; row < snakeLength; row++) {
+            let lastIndex = snakeCoordinates.length - 1;
+            if (snakeLength <= 2) {
               snakeCoordinates = [
                 ...snakeCoordinates,
-                [snakeCoordinates[row - 1][0], snakeCoordinates[row - 1][1]],
+                [
+                  // the row should remain the same because we're staying at the same line
+                  snakeCoordinates[lastIndex][0],
+                  snakeCoordinates[lastIndex][1],
+                ],
+              ];
+            } else {
+              snakeCoordinates = [
+                ...snakeCoordinates,
+                [
+                  snakeCoordinates[lastIndex][0] + 1,
+                  snakeCoordinates[lastIndex][1],
+                ],
               ];
             }
           } else {
-            for (let row = 1; row < snakeLength; row++) {
-              snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
-              snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
+            if (snakeLength <= 2) {
+              for (let row = 1; row < snakeLength; row++) {
+                snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
+                snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
+              }
+            } else {
+              for (let row = 1; row < snakeLength; row++) {
+                if (row === 1) {
+                  snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
+                  snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
+                } else {
+                  snakeCoordinates[row][0] = snakeCoordinates[row - 1][0] - 1;
+                  snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
+                }
+              }
             }
           }
         }
         break;
+
       case 'decrement':
         // Up
         i--;
         if (!(i > 9 || i < 0 || j > 9 || j < 0)) {
           let changed = false;
           if (board[i][j] === 2) {
-            console.log('eat');
+            score += snakeLength;
+            snakeLength++;
+            changed = true;
             do {
               foodI = generateIndex();
               foodJ = generateIndex();
             } while (foodI === i || foodJ === j || foodI === j || foodJ === i);
             board[foodI][foodJ] = 2;
-            snakeLength++;
-            console.log('snake length increasing 4');
-            changed = true;
           }
           if (changed) {
-            for (let row = 1; row < snakeLength; row++) {
+            let lastIndex = snakeCoordinates.length - 1;
+            if (snakeLength <= 2) {
               snakeCoordinates = [
                 ...snakeCoordinates,
-                [snakeCoordinates[row - 1][0], snakeCoordinates[row - 1][1]],
+                [
+                  // the row should remain the same because we're staying at the same line
+                  snakeCoordinates[lastIndex][0],
+                  snakeCoordinates[lastIndex][1],
+                ],
+              ];
+            } else {
+              snakeCoordinates = [
+                ...snakeCoordinates,
+                [
+                  snakeCoordinates[lastIndex][0] - 1,
+                  snakeCoordinates[lastIndex][1],
+                ],
               ];
             }
           } else {
-            for (let row = 1; row < snakeLength; row++) {
-              snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
-              snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
+            if (snakeLength <= 2) {
+              for (let row = 1; row < snakeLength; row++) {
+                snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
+                // Go back here
+                snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
+              }
+            } else {
+              for (let row = 1; row < snakeLength; row++) {
+                if (row === 1) {
+                  snakeCoordinates[row][0] = snakeCoordinates[row - 1][0];
+                  snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
+                } else {
+                  snakeCoordinates[row][0] = snakeCoordinates[row - 1][0] + 1;
+                  snakeCoordinates[row][1] = snakeCoordinates[row - 1][1];
+                }
+              }
             }
           }
         }
@@ -222,6 +311,7 @@
       console.log('clean up');
       board = board;
       snakeCoordinates.forEach((coordinate) => {
+        console.log(coordinate);
         board[coordinate[0]][coordinate[1]] = 1;
       });
     }
@@ -230,6 +320,7 @@
 
 <svelte:window on:keydown={(e) => handleKeydown(e)} />
 
+<h2>Score: {score}</h2>
 <div class="wrapper">
   <div class="board">
     {#each board as row, i}
@@ -250,6 +341,12 @@
 </div>
 
 <style>
+  h2 {
+    text-align: center;
+    text-decoration-line: underline;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
   h1 {
     position: absolute;
     bottom: 50px;
